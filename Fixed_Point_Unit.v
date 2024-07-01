@@ -40,49 +40,49 @@ module Fixed_Point_Unit
     reg [WIDTH - 1 : 0] root;
     reg root_ready;
 
-    reg [5:0] sqrt_state;
-    reg [WIDTH - 1 : 0] radicand, remainder;
-    reg [WIDTH * 2 - 1 : 0] temp;
-    always @(posedge reset)
-    begin
-        if (reset) begin
-            sqrt_state <= 6'd0;
-            root_ready <= 1'b0;
-        end else if (operation == `FPU_SQRT) begin
-            case (sqrt_state)
-                6'd0: begin // Initialize
-                    radicand <= operand_1;
-                    root <= 0;
-                    remainder <= 0;
-                    temp <= 0;
-                    sqrt_state <= 6'd1;
-                end
-                6'd1: begin // Main calculation loop
-                    if (sqrt_state[5:1] < 5'd21) begin // 21 iterations for Q22.10
-                        temp = {remainder, radicand[WIDTH-1:WIDTH-2]};
-                        radicand <= {radicand[WIDTH-3:0], 2'b00};
-                        if (temp >= {root, 1'b1}) begin
-                            remainder <= temp - {root, 1'b1};
-                            root <= {root[WIDTH-2:0], 1'b1};
-                        end else begin
-                            remainder <= temp;
-                            root <= {root[WIDTH-2:0], 1'b0};
-                        end
-                        sqrt_state <= sqrt_state + 6'd1;
-                    end else begin
-                        sqrt_state <= 6'd32; // Move to final state
-                    end
-                end
-                6'd32: begin // Set ready signal
-                    root_ready <= 1'b1;
-                    sqrt_state <= 6'd0;
-                end
-            endcase
-        end else begin
-            sqrt_state <= 6'd0;
-            root_ready <= 1'b0;
-        end
-    end
+    // reg [5:0] sqrt_state;
+    // reg [WIDTH - 1 : 0] radicand, remainder;
+    // reg [WIDTH * 2 - 1 : 0] temp;
+    // always @(posedge reset)
+    // begin
+    //     if (reset) begin
+    //         sqrt_state <= 6'd0;
+    //         root_ready <= 1'b0;
+    //     end else if (operation == `FPU_SQRT) begin
+    //         case (sqrt_state)
+    //             6'd0: begin // Initialize
+    //                 radicand <= operand_1;
+    //                 root <= 0;
+    //                 remainder <= 0;
+    //                 temp <= 0;
+    //                 sqrt_state <= 6'd1;
+    //             end
+    //             6'd1: begin // Main calculation loop
+    //                 if (sqrt_state[5:1] < 5'd21) begin // 21 iterations for Q22.10
+    //                     temp = {remainder, radicand[WIDTH-1:WIDTH-2]};
+    //                     radicand <= {radicand[WIDTH-3:0], 2'b00};
+    //                     if (temp >= {root, 1'b1}) begin
+    //                         remainder <= temp - {root, 1'b1};
+    //                         root <= {root[WIDTH-2:0], 1'b1};
+    //                     end else begin
+    //                         remainder <= temp;
+    //                         root <= {root[WIDTH-2:0], 1'b0};
+    //                     end
+    //                     sqrt_state <= sqrt_state + 6'd1;
+    //                 end else begin
+    //                     sqrt_state <= 6'd32; // Move to final state
+    //                 end
+    //             end
+    //             6'd32: begin // Set ready signal
+    //                 root_ready <= 1'b1;
+    //                 sqrt_state <= 6'd0;
+    //             end
+    //         endcase
+    //     end else begin
+    //         sqrt_state <= 6'd0;
+    //         root_ready <= 1'b0;
+    //     end
+    // end
 
     
         /*
@@ -113,47 +113,47 @@ module Fixed_Point_Unit
     
     reg[2:0] mul_state;
 
-    always @(posedge reset)
+    always @(posedge clk or posedge reset)
     begin
         if (reset) begin
-            mul_state <= 3'd0;
-            product_ready <= 1'b0;
+            product <= 0;
+            mul_state <= 0;
+            product_ready <= 0;
         end else if (operation == `FPU_MUL) begin
             case (mul_state)
-                3'd0: begin // Start LL multiplication
+                0: begin // Start LL multiplication
                     multiplierCircuitInput1 <= operand_1[15:0];
                     multiplierCircuitInput2 <= operand_2[15:0];
-                    mul_state <= 3'd1;
+                    mul_state <= 1;
                 end
-                3'd1: begin // LL multiplication done, start LH
+                1: begin // LL multiplication done, start LH
                     partialProduct1 <= multiplierCircuitResult;
                     multiplierCircuitInput1 <= operand_1[15:0];
                     multiplierCircuitInput2 <= operand_2[31:16];
-                    mul_state <= 3'd2;
+                    mul_state <= 2;
                 end
-                3'd2: begin // LH multiplication done, start HL
-                    partialProduct2 <= multiplierCircuitResult;
+                2: begin // LH multiplication done, start HL
+                    partialProduct2 <= multiplierCircuitResult << 16;
                     multiplierCircuitInput1 <= operand_1[31:16];
                     multiplierCircuitInput2 <= operand_2[15:0];
-                    mul_state <= 3'd3;
+                    mul_state <= 3;
                 end
-                3'd3: begin // HL multiplication done, start HH
-                    partialProduct3 <= multiplierCircuitResult;
+                3: begin // HL multiplication done, start HH
+                    partialProduct3 <= multiplierCircuitResult << 16;
                     multiplierCircuitInput1 <= operand_1[31:16];
                     multiplierCircuitInput2 <= operand_2[31:16];
-                    mul_state <= 3'd4;
+                    mul_state <= 4;
                 end
-                3'd4: begin // HH multiplication done, combine results
-                    partialProduct4 <= multiplierCircuitResult;
-                    product <= {partialProduct4, 32'b0} + {partialProduct3, 16'b0} + {partialProduct2, 16'b0} + partialProduct1;
-                    product_ready <= 1'b1;
-                    mul_state <= 3'd0;
+                4: begin // HH multiplication done, combine results
+                    partialProduct4 <= multiplierCircuitResult << 32;
+                    mul_state <= 5;
                 end
-                default: mul_state <= 3'd0;
+                5: begin 
+                    product <= partialProduct4 + partialProduct3 + partialProduct2 + partialProduct1;
+                    product_ready <= 1;
+                end
+                default: mul_state <= 0;
             endcase
-        end else begin
-            mul_state <= 3'd0;
-            product_ready <= 1'b0;
         end
     end
         /*
