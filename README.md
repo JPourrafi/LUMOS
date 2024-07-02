@@ -2,9 +2,7 @@ Team Members:
 Javad Pourrafi      400411243
 Aryana Taghavi      400411297
 _______________________________________________________________________________________________________________________________________________
-# Assembmly.s
-
-Explanation
+# "Assembmly.s"
 
 **Main:**
 
@@ -67,7 +65,7 @@ Loop Condition: Check if the stack pointer is less than the global pointer. If t
 
 End the program.
 _________________________________________________________________________________________________________________________________________________________________________
-# "Fixed_Point_Unit.v" Explanation
+# "Fixed_Point_Unit.v"
 
 **Declarations:**
 -------------------------------------------------
