@@ -367,4 +367,9 @@ This block performs the core square root calculation.
         * Otherwise, it proceeds to the next iteration, updating `op1` , `ac` , `q` , and the iteration counter *i*.
 
 Waveforms:
-![](Images/multiplier.png)
+
+Multiplier
+![](Images/Multiplier.png)
+
+Square Root
+![](Images/Square_root.png)
