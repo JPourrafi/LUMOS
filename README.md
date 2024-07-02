@@ -365,3 +365,6 @@ This block performs the core square root calculation.
         * If the iteration counter *i* has reached "iteration-1", it completes the calculation and sets root_ready to 1.
 
         * Otherwise, it proceeds to the next iteration, updating `op1` , `ac` , `q` , and the iteration counter *i*.
+
+Waveforms:
+![](Images/multiplier.png)
