@@ -96,21 +96,21 @@ ________________________________________________________________________________
 
 ## Registers and Wires:
 
-* product: 64-bit register to store the final product.
+* `product:` 64-bit register to store the final product.
 
-product_ready: A flag indicating that the product is ready.
+* `product_ready:` A flag indicating that the product is ready.
 
-multiplierCircuitInput1, multiplierCircuitInput2: 16-bit registers for inputs to the 16-bit multiplier.
+* `multiplierCircuitInput1` , `multiplierCircuitInput2:` 16-bit registers for inputs to the 16-bit multiplier.
 
-multiplierCircuitResult: 32-bit wire to hold the result from the 16-bit multiplier.
+* `multiplierCircuitResult:` 32-bit wire to hold the result from the 16-bit multiplier.
 
-partialProduct1, partialProduct2, partialProduct3, partialProduct4: 32-bit registers to store intermediate partial products.
+* `partialProduct1` , `partialProduct2` , `partialProduct3` , `partialProduct4:` 32-bit registers to store intermediate partial products.
 
-mul_state: 3-bit register for state machine control.
+* `mul_state:` 3-bit register for state machine control.
 
 ### Submodule Instantiation:
 
-Multiplier multiplier_circuit: An instance of the Multiplier module which performs the 16-bit multiplication.
++ `Multiplier multiplier_circuit:` An instance of the Multiplier module which performs the 16-bit multiplication.
 
 ## State Machine and Main Logic:
 -------------------------------------------------
@@ -164,17 +164,17 @@ When reset is high, it sets product to 0, mul_state to 0, and product_ready to 0
 
 ## State Machine for Multiplication:
 
-State 0: Load the lower 16 bits of both operands and start the first multiplication (LL multiplication).
+- `State 0:` Load the lower 16 bits of both operands and start the first multiplication (LL multiplication).
 
-State 1: Store the result of the LL multiplication, load the lower 16 bits of operand_1 and upper 16 bits of operand_2 for the next multiplication (LH multiplication).
+- `State 1:` Store the result of the LL multiplication, load the lower 16 bits of operand_1 and upper 16 bits of operand_2 for the next multiplication (LH multiplication).
 
-State 2: Store the result of the LH multiplication (shifted left by 16 bits), load the upper 16 bits of operand_1 and lower 16 bits of operand_2 for the next multiplication (HL multiplication).
+- `State 2:` Store the result of the LH multiplication (shifted left by 16 bits), load the upper 16 bits of operand_1 and lower 16 bits of operand_2 for the next multiplication (HL multiplication).
 
-State 3: Store the result of the HL multiplication (shifted left by 16 bits), load the upper 16 bits of both operands for the next multiplication (HH multiplication).
+- `State 3:` Store the result of the HL multiplication (shifted left by 16 bits), load the upper 16 bits of both operands for the next multiplication (HH multiplication).
 
-State 4: Store the result of the HH multiplication (shifted left by 32 bits).
+- `State 4:` Store the result of the HH multiplication (shifted left by 32 bits).
 
-State 5: Combine all partial products to get the final product and set the product_ready flag.
+- `State 5:` Combine all partial products to get the final product and set the product_ready flag.
 
 ## Multiplier Module:
 -------------------------------------------------
