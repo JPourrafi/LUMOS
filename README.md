@@ -115,49 +115,49 @@ ________________________________________________________________________________
 ## State Machine and Main Logic:
 
 -------------------------------------------------
-`always @(posedge clk or posedge reset)
-    begin
-        if (reset) begin
-            product <= 0;
-            mul_state <= 0;
-            product_ready <= 0;
-        end else if (operation == `FPU_MUL) begin
-            case (mul_state)
-                0: begin // Start LL multiplication
-                    multiplierCircuitInput1 <= operand_1[15:0];
-                    multiplierCircuitInput2 <= operand_2[15:0];
-                    mul_state <= 1;
-                end
-                1: begin // LL multiplication done, start LH
-                    partialProduct1 <= multiplierCircuitResult;
-                    multiplierCircuitInput1 <= operand_1[15:0];
-                    multiplierCircuitInput2 <= operand_2[31:16];
-                    mul_state <= 2;
-                end
-                2: begin // LH multiplication done, start HL
-                    partialProduct2 <= multiplierCircuitResult << 16;
-                    multiplierCircuitInput1 <= operand_1[31:16];
-                    multiplierCircuitInput2 <= operand_2[15:0];
-                    mul_state <= 3;
-                end
-                3: begin // HL multiplication done, start HH
-                    partialProduct3 <= multiplierCircuitResult << 16;
-                    multiplierCircuitInput1 <= operand_1[31:16];
-                    multiplierCircuitInput2 <= operand_2[31:16];
-                    mul_state <= 4;
-                end
-                4: begin // HH multiplication done, combine results
-                    partialProduct4 <= multiplierCircuitResult << 32;
-                    mul_state <= 5;
-                end
-                5: begin 
-                    product <= partialProduct4 + partialProduct3 + partialProduct2 + partialProduct1;
-                    product_ready <= 1;
-                end
-                default: mul_state <= 0;
-            endcase
+    always @(posedge clk or posedge reset)
+        begin
+            if (reset) begin
+                product <= 0;
+                mul_state <= 0;
+                product_ready <= 0;
+            end else if (operation == `FPU_MUL) begin
+                case (mul_state)
+                    0: begin // Start LL multiplication
+                        multiplierCircuitInput1 <= operand_1[15:0];
+                        multiplierCircuitInput2 <= operand_2[15:0];
+                        mul_state <= 1;
+                    end
+                    1: begin // LL multiplication done, start LH
+                        partialProduct1 <= multiplierCircuitResult;
+                        multiplierCircuitInput1 <= operand_1[15:0];
+                        multiplierCircuitInput2 <= operand_2[31:16];
+                        mul_state <= 2;
+                    end
+                    2: begin // LH multiplication done, start HL
+                        partialProduct2 <= multiplierCircuitResult << 16;
+                        multiplierCircuitInput1 <= operand_1[31:16];
+                        multiplierCircuitInput2 <= operand_2[15:0];
+                        mul_state <= 3;
+                    end
+                    3: begin // HL multiplication done, start HH
+                        partialProduct3 <= multiplierCircuitResult << 16;
+                        multiplierCircuitInput1 <= operand_1[31:16];
+                        multiplierCircuitInput2 <= operand_2[31:16];
+                        mul_state <= 4;
+                    end
+                    4: begin // HH multiplication done, combine results
+                        partialProduct4 <= multiplierCircuitResult << 32;
+                        mul_state <= 5;
+                    end
+                    5: begin 
+                        product <= partialProduct4 + partialProduct3 + partialProduct2 + partialProduct1;
+                        product_ready <= 1;
+                    end
+                    default: mul_state <= 0;
+                endcase
+            end
         end
-    end`
 -------------------------------------------------
 ## Reset Logic:
 
