@@ -73,6 +73,8 @@ End the program.
 _________________________________________________________________________________________________________________________________________________________________________
 # "Fixed_Point_Unit.v"
 
+# Multiplier Module
+
 ## Declarations:
 -------------------------------------------------
     // ------------------ //
@@ -199,3 +201,167 @@ When reset is high, it sets product to 0, mul_state to 0, and product_ready to 0
     endmodule
 -------------------------------------------------
 This module performs the multiplication of two 16-bit operands(input Signals) and produces a 32-bit product(Output Signal).
+_________________________________________________________________________________________________________________________________________________________________________
+# Square Root Circuit:
+
+## Declarations
+-------------------------------------------------
+    // ------------------- //
+    // Square Root Circuit //
+    // ------------------- //
+    // Register declarations
+    reg [WIDTH - 1 : 0] root;           // Stores the final square root result
+    reg root_ready;                     // Flag indicating when the result is ready
+    reg [1 : 0] s_stage;      // Current stage of the square root operation
+    reg [1 : 0] next_s_stage; // Next stage of the square root operation
+    reg sqrt_start;                     // Flag to start the square root calculation
+    reg sqrt_busy;                      // Flag indicating the calculation is in progress
+    reg [WIDTH - 1 : 0] op1, op1_next;      // Operand and its next value in the calculation
+    reg [WIDTH - 1 : 0] q, q_next;      // Partial result and its next value
+    reg [WIDTH + 1 : 0] ac, ac_next;    // Accumulator and its next value
+    reg [WIDTH + 1 : 0] test_res;       // Temporary result for comparison
+
+    // Calculate the number of iterationations based on WIDTH and FBITS
+    localparam iteration = (WIDTH + FBITS) / 2;     
+    reg [4 : 0] i = 0;                  // iterationation counter
+-------------------------------------------------
+
+## Registers and Wires:
+
+* `root:` Stores the final square root result.
+
+* `root_ready:` Indicates when the result is ready.
+
+* `s_stage` , `next_s_stage:` Registers to hold the current and next stages of the state machine.
+
+* `sqrt_start:` Flag to start the square root calculation.
+
+* `sqrt_busy:` Flag indicating the calculation is in progress.
+
+* `op1` , `op1_next:` The operand being operated on and its next value.
+
+* `q` , `q_next:` Partial result of the square root and its next value.
+
+* `ac` , `ac_next:` Accumulator used in the calculation and its next value.
+
+* `test_res:` Temporary result for comparison in the algorithm.
+
+### Parameters:
+
++ `iteration:` Number of iterations required, calculated based on the width of the operands (WIDTH) and fractional bits (FBITS).
+
++ `i:` Counter for the number of iterations.
+
+## State Machine for Control
+-------------------------------------------------
+    always @(posedge clk) 
+    begin
+        if (operation == `FPU_SQRT) 
+            s_stage <= next_s_stage;
+        else begin
+            s_stage <= 2'b00;
+            root_ready <= 0;
+        end
+    end 
+-------------------------------------------------
+
+> This always block updates the current stage (s_stage) based on the next_s_stage.
+
+> If the operation is FPU_SQRT, it updates s_stage to next_s_stage.
+
+> If the operation is not FPU_SQRT, it resets the s_stage to 0 and clears the root_ready flag.
+
+## Combinational Logic for Next Stage
+-------------------------------------------------
+    always @(*) 
+    begin
+        next_s_stage <= 'bz;
+        case (s_stage)
+            2'b00 : begin sqrt_start <= 0; next_s_stage <= 2'b01; end
+            2'b01 : begin sqrt_start <= 1; next_s_stage <= 2'b10; end
+            2'b10 : begin sqrt_start <= 0; next_s_stage <= 2'b10; end
+        endcase    
+    end             
+-------------------------------------------------
+
+`always block` determines the next state of the state machine based on the current state (s_stage).
+
+* In state 2'b00, it sets sqrt_start to 0 and transitions to state 2'b01.
+
+* In state 2'b01, it sets sqrt_start to 1 and transitions to state 2'b10.
+
+* In state 2'b10, it sets sqrt_start to 0 and remains in state 2'b10.
+
+## Core Square Root Calculation Logic
+-------------------------------------------------
+    always @(*)
+    begin
+        // Calculate the test result
+        test_res = ac - {q, 2'b01};
+
+        if (test_res[WIDTH + 1] == 0) 
+        begin
+            // If test_res is non-negative, update ac and op1, set least significant bit of q to 1
+            {ac_next, op1_next} = {test_res[WIDTH - 1 : 0], op1, 2'b0};
+            q_next = {q[WIDTH - 2 : 0], 1'b1};
+        end 
+        else begin
+            // If test_res is negative, shift ac and op1, shift q left
+            {ac_next, op1_next} = {ac[WIDTH - 1 : 0], op1, 2'b0};
+            q_next = q << 1;
+        end
+    end
+-------------------------------------------------
+
+This block performs the core square root calculation.
+
+* `test_res` is calculated by subtracting {q, 2'b01} from ac.
+
+* If test_res is `non-negative` (test_res[WIDTH + 1] == 0), it updates ac and op1 and sets the least significant bit of q to 1.
+
+* If test_res is `negative`, it shifts ac and op1 left and shifts q left.
+
+## Sequential Logic for Square Root Calculation
+-------------------------------------------------
+    // Sequential logic for square root calculation
+    always @(posedge clk) 
+    begin
+        if (sqrt_start)
+        begin
+            // Initialize variables for a new calculation
+            sqrt_busy <= 1;
+            root_ready <= 0;
+            i <= 0;
+            q <= 0;
+            {ac, op1} <= {{WIDTH{1'b0}}, operand_1, 2'b0};
+        end
+        else if (sqrt_busy) 
+        begin
+            if (i == iteration-1) 
+            begin
+                // Calculation is complete
+                sqrt_busy <= 0;
+                root_ready <= 1;
+                root <= q_next;
+            end
+            else begin 
+                // Proceed to next iterationation
+                i <= i + 1;
+                op1 <= op1_next;
+                ac <= ac_next;
+                q <= q_next;
+                root_ready <= 0;
+            end
+        end
+    end
+-------------------------------------------------
+
+* This block handles the initialization and progression of the square root calculation.
+
+    * If `sqrt_start` is high, it initializes the variables and starts the calculation.
+
+    * If `sqrt_busy` is high, it continues the calculation.
+
+        * If the iteration counter *i* has reached "iteration-1", it completes the calculation and sets root_ready to 1.
+
+        * Otherwise, it proceeds to the next iteration, updating `op1` , `ac` , `q` , and the iteration counter *i*.
