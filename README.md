@@ -115,7 +115,7 @@ ________________________________________________________________________________
 ## State Machine and Main Logic:
 
 -------------------------------------------------
-always @(posedge clk or posedge reset)
+`always @(posedge clk or posedge reset)
     begin
         if (reset) begin
             product <= 0;
@@ -157,7 +157,7 @@ always @(posedge clk or posedge reset)
                 default: mul_state <= 0;
             endcase
         end
-    end
+    end`
 -------------------------------------------------
 ## Reset Logic:
 
