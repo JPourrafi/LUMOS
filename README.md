@@ -113,6 +113,7 @@ ________________________________________________________________________________
 + `Multiplier multiplier_circuit:` An instance of the Multiplier module which performs the 16-bit multiplication.
 
 ## State Machine and Main Logic:
+
 -------------------------------------------------
 always @(posedge clk or posedge reset)
     begin
