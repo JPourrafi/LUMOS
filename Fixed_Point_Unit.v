@@ -40,49 +40,56 @@ module Fixed_Point_Unit
     reg [WIDTH - 1 : 0] root;
     reg root_ready;
 
-    // reg [5:0] sqrt_state;
-    // reg [WIDTH - 1 : 0] radicand, remainder;
-    // reg [WIDTH * 2 - 1 : 0] temp;
-    // always @(posedge reset)
-    // begin
-    //     if (reset) begin
-    //         sqrt_state <= 6'd0;
-    //         root_ready <= 1'b0;
-    //     end else if (operation == `FPU_SQRT) begin
-    //         case (sqrt_state)
-    //             6'd0: begin // Initialize
-    //                 radicand <= operand_1;
-    //                 root <= 0;
-    //                 remainder <= 0;
-    //                 temp <= 0;
-    //                 sqrt_state <= 6'd1;
-    //             end
-    //             6'd1: begin // Main calculation loop
-    //                 if (sqrt_state[5:1] < 5'd21) begin // 21 iterations for Q22.10
-    //                     temp = {remainder, radicand[WIDTH-1:WIDTH-2]};
-    //                     radicand <= {radicand[WIDTH-3:0], 2'b00};
-    //                     if (temp >= {root, 1'b1}) begin
-    //                         remainder <= temp - {root, 1'b1};
-    //                         root <= {root[WIDTH-2:0], 1'b1};
-    //                     end else begin
-    //                         remainder <= temp;
-    //                         root <= {root[WIDTH-2:0], 1'b0};
-    //                     end
-    //                     sqrt_state <= sqrt_state + 6'd1;
-    //                 end else begin
-    //                     sqrt_state <= 6'd32; // Move to final state
-    //                 end
-    //             end
-    //             6'd32: begin // Set ready signal
-    //                 root_ready <= 1'b1;
-    //                 sqrt_state <= 6'd0;
-    //             end
-    //         endcase
-    //     end else begin
-    //         sqrt_state <= 6'd0;
-    //         root_ready <= 1'b0;
-    //     end
-    // end
+    reg [3:0] sqrt_state;
+    reg [WIDTH - 1 : 0] radicand;
+    reg [WIDTH - 1 : 0] res;
+    reg [WIDTH - 1 : 0] iteration;
+    reg [WIDTH - 1 : 0] temp;
+    reg [WIDTH - 1 : 0] reminder;
+    reg [WIDTH - 1 : 0] op1;
+    reg [1 : 0] bits;
+
+    always @(posedge clk or posedge reset)
+    begin
+        if (reset) begin
+            sqrt_state <=0;
+            root <= 0;
+            root_ready <= 0;
+            op1 <= operand_1;
+        end else if (operation == `FPU_SQRT) begin
+            case (sqrt_state)
+                0: begin // Initialize
+                    radicand <= operand_1[WIDTH - 1: WIDTH - 2];
+                    res <= 0;
+                    temp <= 2'b01;
+                    sqrt_state <= 1;
+                    iteration <= (WIDTH + FBITS) / 2;
+                end
+                1: begin // Main calculation loop
+                    if(iteration > 0) begin
+                        reminder <= radicand - temp;
+                        if(reminder < 0) begin
+                            res = res << 1;
+                        end else begin
+                            res = (res << 1) + 1;
+                        end
+                    end
+                    
+                    op1 <= op1 << 2;
+                    bits <= op1[WIDTH - 1 : WIDTH - 2];
+                    radicand <= (radicand << 2) + bits;
+                    temp <= (res << 2) + 1 ;    
+                    iteration <= iteration - 1;
+
+                end
+                2: begin // Set ready signal
+                    root <= res;
+                    root_ready <= 1;
+                    sqrt_state <= 0;
+                end
+            endcase
+        end    
+    end
 
     
         /*
