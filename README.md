@@ -6,9 +6,9 @@ ________________________________________________________________________________
 
 Explanation
 
-Main:
+**Main:**
 
-Initialization:
+**Initialization:**
 
     li          sp,     0x3C00
 
@@ -18,9 +18,9 @@ This sets the starting point for the stack pointer (sp). sp is set to 0x3C00 (st
 
 This sets the global pointer (gp) to a position 392 units away from the stack pointer. The global pointer represents the end condition for the loop. gp is set to sp + 392.
 
-Loop:            
+**Loop:**            
 
-Loop and Loading Values:
+**Loop and Loading Values:**
 
     flw         f1,     0(sp)
 
@@ -30,7 +30,7 @@ Load the value from the address pointed to by sp (Load values from 0x3C00) into 
 
 Load the value from the address sp + 4 (Load values from 0x3C04) into f2. This represents the value at D1x.
 
-Floating Point Operations:
+**Floating Point Operations:**
 
     fmul.s      f10,    f1,     f1
 
@@ -53,7 +53,7 @@ Compute the square root of the sum (result stored in x3).
 Accumulate the results (D1) into f0.
 
 
-Pointer Adjustment and Loop Control:    
+**Pointer Adjustment and Loop Control:**    
 
     addi        sp,     sp,     8
 
