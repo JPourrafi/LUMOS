@@ -67,7 +67,7 @@ End the program.
 _________________________________________________________________________________________________________________________________________________________________________
 # "Fixed_Point_Unit.v"
 
-**Declarations:**
+## Declarations:
 -------------------------------------------------
     // ------------------ //
     // Multiplier Circuit //
@@ -94,7 +94,7 @@ ________________________________________________________________________________
     reg[2:0] mul_state;
 -------------------------------------------------
 
-**Registers and Wires:**
+## Registers and Wires:
 
 product: 64-bit register to store the final product.
 
@@ -108,11 +108,11 @@ partialProduct1, partialProduct2, partialProduct3, partialProduct4: 32-bit regis
 
 mul_state: 3-bit register for state machine control.
 
-**Submodule Instantiation:**
+### Submodule Instantiation:
 
 Multiplier multiplier_circuit: An instance of the Multiplier module which performs the 16-bit multiplication.
 
-**State Machine and Main Logic:**
+## State Machine and Main Logic:
 -------------------------------------------------
 always @(posedge clk or posedge reset)
     begin
@@ -158,11 +158,11 @@ always @(posedge clk or posedge reset)
         end
     end
 -------------------------------------------------
-**Reset Logic:**
+## Reset Logic:
 
 When reset is high, it sets product to 0, mul_state to 0, and product_ready to 0.
 
-**State Machine for Multiplication:**
+## State Machine for Multiplication:
 
 State 0: Load the lower 16 bits of both operands and start the first multiplication (LL multiplication).
 
@@ -176,7 +176,7 @@ State 4: Store the result of the HH multiplication (shifted left by 32 bits).
 
 State 5: Combine all partial products to get the final product and set the product_ready flag.
 
-**Multiplier Module:**
+## Multiplier Module:
 -------------------------------------------------
 module Multiplier
 (
