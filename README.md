@@ -3,37 +3,38 @@ Javad Pourrafi      400411243
 Aryana Taghavi      400411297
 _______________________________________________________________________________________________________________________________________________
 # Assembmly.s Explanation
-Main:           # Initialization
+Main:
+Initialization:
     li          sp,     0x3C00
-# This sets the starting point for the stack pointer (sp). sp is set to 0x3C00 (starting address).
+This sets the starting point for the stack pointer (sp). sp is set to 0x3C00 (starting address).
     addi        gp,     sp,     392
-# This sets the global pointer (gp) to a position 392 units away from the stack pointer. The global pointer represents the end condition for the loop. gp is set to sp + 392.
+This sets the global pointer (gp) to a position 392 units away from the stack pointer. The global pointer represents the end condition for the loop. gp is set to sp + 392.
 Loop:            
 Loop and Loading Values:
     flw         f1,     0(sp)
-# Load the value from the address pointed to by sp (Load values from 0x3C00) into f1. This can be seen as D1 in the diagram.
+Load the value from the address pointed to by sp (Load values from 0x3C00) into f1. This can be seen as D1 in the diagram.
     flw         f2,     4(sp)
-# Load the value from the address sp + 4 (Load values from 0x3C04) into f2. This represents the value at D1x.
+Load the value from the address sp + 4 (Load values from 0x3C04) into f2. This represents the value at D1x.
 
 Floating Point Operations:
     fmul.s      f10,    f1,     f1
-# Square the value loaded from D1x (result stored in f10).
+Square the value loaded from D1x (result stored in f10).
     fmul.s      f20,    f2,     f2
-# Square the value loaded from D1y (result stored in f20).
+Square the value loaded from D1y (result stored in f20).
     fadd.s      f30,    f10,    f20
-# Add the results of the squared values (result stored in f30).
+Add the results of the squared values (result stored in f30).
     fsqrt.s     x3,     f30
-# Compute the square root of the sum (result stored in x3).
+Compute the square root of the sum (result stored in x3).
     fadd.s      f0,     f0,     f3
-# Accumulate the results (D1) into f0.
+Accumulate the results (D1) into f0.
 
 Pointer Adjustment and Loop Control:    
     addi        sp,     sp,     8
-# Move the stack pointer to the next set of values. This corresponds to moving to D2 in the diagram.
+Move the stack pointer to the next set of values. This corresponds to moving to D2 in the diagram.
     blt         sp,     gp,     loop
-# Loop Condition: Check if the stack pointer is less than the global pointer. If true, continue the loop, otherwise exit. Repeat the process, incrementing sp and loading values until sp reaches gp.
+Loop Condition: Check if the stack pointer is less than the global pointer. If true, continue the loop, otherwise exit. Repeat the process, incrementing sp and loading values until sp reaches gp.
     ebreak
-# End the program.
+End the program.
 _________________________________________________________________________________________________________________________________________________________________________
 # "Fixed_Point_Unit.v" Explanation
 Declarations:
