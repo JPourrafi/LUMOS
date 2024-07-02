@@ -1,5 +1,11 @@
+# Computer Organization - Spring 2024
+
+## Iran Univeristy of Science and Technology
+
 Team Members:
+
 Javad Pourrafi      400411243
+
 Aryana Taghavi      400411297
 _______________________________________________________________________________________________________________________________________________
 # "Assembmly.s"
