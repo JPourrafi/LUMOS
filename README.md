@@ -179,18 +179,17 @@ When reset is high, it sets product to 0, mul_state to 0, and product_ready to 0
 
 ## Multiplier Module:
 -------------------------------------------------
-module Multiplier
-(
-    input wire [15 : 0] operand_1,
-    input wire [15 : 0] operand_2,
+    module Multiplier
+    (
+        input wire [15 : 0] operand_1,
+        input wire [15 : 0] operand_2,
+        output reg [31 : 0] product
+    );
 
-    output reg [31 : 0] product
-);
-
-    always @(*)
-    begin
-        product <= operand_1 * operand_2;
-    end
-endmodule
+        always @(*)
+        begin
+            product <= operand_1 * operand_2;
+        end
+    endmodule
 -------------------------------------------------
 This module performs the multiplication of two 16-bit operands(input Signals) and produces a 32-bit product(Output Signal).
