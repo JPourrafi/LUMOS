@@ -96,7 +96,7 @@ ________________________________________________________________________________
 
 ## Registers and Wires:
 
-product: 64-bit register to store the final product.
+* product: 64-bit register to store the final product.
 
 product_ready: A flag indicating that the product is ready.
 
