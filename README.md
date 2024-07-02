@@ -1,48 +1,149 @@
-<img src="https://github.com/IUST-Computer-Organization/.github/blob/main/images/CompOrg_orange.png" alt="Image" width="85" height="85" style="vertical-align:middle"> LUMOS RISC-V
-=================================
-> Light Utilization with Multicycle Operational Stages (LUMOS) RISC-V Processor Core
+Team Members:
+Javad Pourrafi      400411243
+Aryana Taghavi      400411297
+_______________________________________________________________________________________________________________________________________________
+# Assembmly.s Explanation
+Main:           # Initialization
+    li          sp,     0x3C00
+# This sets the starting point for the stack pointer (sp). sp is set to 0x3C00 (starting address).
+    addi        gp,     sp,     392
+# This sets the global pointer (gp) to a position 392 units away from the stack pointer. The global pointer represents the end condition for the loop. gp is set to sp + 392.
+Loop:            
+Loop and Loading Values:
+    flw         f1,     0(sp)
+# Load the value from the address pointed to by sp (Load values from 0x3C00) into f1. This can be seen as D1 in the diagram.
+    flw         f2,     4(sp)
+# Load the value from the address sp + 4 (Load values from 0x3C04) into f2. This represents the value at D1x.
 
-<div align="justify">
+Floating Point Operations:
+    fmul.s      f10,    f1,     f1
+# Square the value loaded from D1x (result stored in f10).
+    fmul.s      f20,    f2,     f2
+# Square the value loaded from D1y (result stored in f20).
+    fadd.s      f30,    f10,    f20
+# Add the results of the squared values (result stored in f30).
+    fsqrt.s     x3,     f30
+# Compute the square root of the sum (result stored in x3).
+    fadd.s      f0,     f0,     f3
+# Accumulate the results (D1) into f0.
 
-## Introduction
+Pointer Adjustment and Loop Control:    
+    addi        sp,     sp,     8
+# Move the stack pointer to the next set of values. This corresponds to moving to D2 in the diagram.
+    blt         sp,     gp,     loop
+# Loop Condition: Check if the stack pointer is less than the global pointer. If true, continue the loop, otherwise exit. Repeat the process, incrementing sp and loading values until sp reaches gp.
+    ebreak
+# End the program.
+_________________________________________________________________________________________________________________________________________________________________________
+# "Fixed_Point_Unit.v" Explanation
+Declarations:
+-------------------------------------------------
+    // ------------------ //
+    // Multiplier Circuit //
+    // ------------------ //   
+    reg [64 - 1 : 0] product;
+    reg product_ready;
 
-**LUMOS** is a multicycle RISC-V processor that implements a subset of `RV32I` instruction set, designed for educational use in computer organization classes at **Iran University of Science and Technology**. It allows for modular design projects, enabling students to gain hands-on experience with processor architecture.
+    reg     [15 : 0] multiplierCircuitInput1;
+    reg     [15 : 0] multiplierCircuitInput2;
+    wire    [31 : 0] multiplierCircuitResult;
 
-## Features
+    Multiplier multiplier_circuit
+    (
+        .operand_1(multiplierCircuitInput1),
+        .operand_2(multiplierCircuitInput2),
+        .product(multiplierCircuitResult)
+    );
 
-- LUMOS executes instructions in multiple stages, such as `instruction_fetch`, `fetch_wait`, `fetch_done`, `decode`, `execute`, `memory_access`, and etc. This approach allows for more complex operations and better utilization of processor resources compared to single-cycle designs. This processor does not support the entire `RV32I` instruction set, which is the base integer instruction set of RISC-V. Instead, it focuses on a subset of instructions that are essential for educational purposes and demonstrating the principles of computer architecture.
+    reg     [31 : 0] partialProduct1;
+    reg     [31 : 0] partialProduct2;
+    reg     [31 : 0] partialProduct3;
+    reg     [31 : 0] partialProduct4;
+    
+    reg[2:0] mul_state;
+-------------------------------------------------
+Registers and Wires:
+# product: 64-bit register to store the final product.
+# product_ready: A flag indicating that the product is ready.
+# multiplierCircuitInput1, multiplierCircuitInput2: 16-bit registers for inputs to the 16-bit multiplier.
+# multiplierCircuitResult: 32-bit wire to hold the result from the 16-bit multiplier.
+# partialProduct1, partialProduct2, partialProduct3, partialProduct4: 32-bit registers to store intermediate partial products.
+# mul_state: 3-bit register for state machine control.
 
-- The processor is designed with modularity in mind, allowing students to work on various components of the processor. As part of their course projects, students will design different execution units, such as FPUs, control units, memory interfaces, and other modules that are integral to the processor's functionality.
+Submodule Instantiation:
+# Multiplier multiplier_circuit: An instance of the Multiplier module which performs the 16-bit multiplication.
 
-## LUMOS Datapath
+State Machine and Main Logic:
+-------------------------------------------------
+always @(posedge clk or posedge reset)
+    begin
+        if (reset) begin
+            product <= 0;
+            mul_state <= 0;
+            product_ready <= 0;
+        end else if (operation == `FPU_MUL) begin
+            case (mul_state)
+                0: begin // Start LL multiplication
+                    multiplierCircuitInput1 <= operand_1[15:0];
+                    multiplierCircuitInput2 <= operand_2[15:0];
+                    mul_state <= 1;
+                end
+                1: begin // LL multiplication done, start LH
+                    partialProduct1 <= multiplierCircuitResult;
+                    multiplierCircuitInput1 <= operand_1[15:0];
+                    multiplierCircuitInput2 <= operand_2[31:16];
+                    mul_state <= 2;
+                end
+                2: begin // LH multiplication done, start HL
+                    partialProduct2 <= multiplierCircuitResult << 16;
+                    multiplierCircuitInput1 <= operand_1[31:16];
+                    multiplierCircuitInput2 <= operand_2[15:0];
+                    mul_state <= 3;
+                end
+                3: begin // HL multiplication done, start HH
+                    partialProduct3 <= multiplierCircuitResult << 16;
+                    multiplierCircuitInput1 <= operand_1[31:16];
+                    multiplierCircuitInput2 <= operand_2[31:16];
+                    mul_state <= 4;
+                end
+                4: begin // HH multiplication done, combine results
+                    partialProduct4 <= multiplierCircuitResult << 32;
+                    mul_state <= 5;
+                end
+                5: begin 
+                    product <= partialProduct4 + partialProduct3 + partialProduct2 + partialProduct1;
+                    product_ready <= 1;
+                end
+                default: mul_state <= 0;
+            endcase
+        end
+    end
+-------------------------------------------------
+Reset Logic:
+# When reset is high, it sets product to 0, mul_state to 0, and product_ready to 0.
 
-In a multicycle implementation, we can break down each instruction into a series of steps corresponding to the functional unit operations that are needed. These steps can be used to create a multi-cycle implementation. In this architecture, each step will take 1 clock cycle. This allows that components in the design and different functional units to be used more than once per instruction, as long as it is used on different clock cycles. This sharing of resources can help reduce the amount of hardware required. This classic view of CPU design partitions the design of a processor into data path design and control design. Data path design focuses on the design of ALU and other functional units as well as accessing the registers and memory. Control path design focuses on the design of the state machines to decode instructions and generate the sequence of control signals necessary to appropriately manipulate the data path.
+State Machine for Multiplication:
+# State 0: Load the lower 16 bits of both operands and start the first multiplication (LL multiplication).
+# State 1: Store the result of the LL multiplication, load the lower 16 bits of operand_1 and upper 16 bits of operand_2 for the next multiplication (LH multiplication).
+# State 2: Store the result of the LH multiplication (shifted left by 16 bits), load the upper 16 bits of operand_1 and lower 16 bits of operand_2 for the next multiplication (HL multiplication).
+# State 3: Store the result of the HL multiplication (shifted left by 16 bits), load the upper 16 bits of both operands for the next multiplication (HH multiplication).
+# State 4: Store the result of the HH multiplication (shifted left by 32 bits).
+# State 5: Combine all partial products to get the final product and set the product_ready flag.
 
-![Alt text](https://github.com/IUST-Computer-Organization/LUMOS/blob/main/Images/Datapath_1.png "LUMOS Datapath Section 1")
-![Alt text](https://github.com/IUST-Computer-Organization/LUMOS/blob/main/Images/Datapath_2.png "LUMOS Datapath Section 2")
-![Alt text](https://github.com/IUST-Computer-Organization/LUMOS/blob/main/Images/Datapath_3.png "LUMOS Datapath Section 3")
+Multiplier Module:
+-------------------------------------------------
+module Multiplier
+(
+    input wire [15 : 0] operand_1,
+    input wire [15 : 0] operand_2,
 
-## Synthesis
+    output reg [31 : 0] product
+);
 
-This processor core is synthesizable in the 45nm CMOS technology node. LUMOS has gone through the RTL-to-GDS flow using *Synopsys Design Compiler* and *Cadence SoC Encounter* tools. At this node, the core can achieve a frequency of **500MHz** while occupying **12000um2** of area and consuming around **3mw** of power.
-</div>
-
-<!-- ![Alt text](https://github.com/IUST-Computer-Organization/LUMOS/blob/main/LUMOS.png "The LUMOS microprocessor synthesized with Design Compiler and placed and routed by Cadence Encounter" =300x300)  -->
-
-<picture>
-    <img 
-        alt="The LUMOS microprocessor synthesized with Design Compiler and placed and routed by Cadence Encounter" 
-        src="https://github.com/IUST-Computer-Organization/LUMOS/blob/main/Images/LUMOS.png"
-        width="550" 
-        height="550"
-    > 
-</picture> 
-
-
-## Copyright
-
-Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies.
-
-Copyright 2024 Iran University of Science and Technology - iustCompOrg@gmail.com  
-
-</div>
+    always @(*)
+    begin
+        product <= operand_1 * operand_2;
+    end
+endmodule
+-------------------------------------------------
+# This module performs the multiplication of two 16-bit operands(input Signals) and produces a 32-bit product(Output Signal).
