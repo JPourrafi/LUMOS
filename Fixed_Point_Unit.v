@@ -40,7 +40,7 @@ module Fixed_Point_Unit
     reg [WIDTH - 1 : 0] root;
     reg root_ready;
 
-    reg [3:0] sqrt_state;
+    reg [2:0] sqrt_state;
     reg [WIDTH - 1 : 0] radicand;
     reg [WIDTH - 1 : 0] res;
     reg [WIDTH - 1 : 0] iteration;
@@ -52,37 +52,37 @@ module Fixed_Point_Unit
     always @(posedge clk or posedge reset)
     begin
         if (reset) begin
-            sqrt_state <=0;
+            sqrt_state <= 0;
             root <= 0;
             root_ready <= 0;
             op1 <= operand_1;
         end else if (operation == `FPU_SQRT) begin
             case (sqrt_state)
-                0: begin // Initialize
+                0: begin 
                     radicand <= operand_1[WIDTH - 1: WIDTH - 2];
                     res <= 0;
                     temp <= 2'b01;
-                    sqrt_state <= 1;
                     iteration <= (WIDTH + FBITS) / 2;
+                    sqrt_state <= 1;
                 end
-                1: begin // Main calculation loop
+                1: begin 
                     if(iteration > 0) begin
                         reminder <= radicand - temp;
                         if(reminder < 0) begin
-                            res = res << 1;
+                            res <= (res << 1);
                         end else begin
-                            res = (res << 1) + 1;
+                            res <= (res << 1) + 1;
                         end
+                        op1 <= (op1 << 2);
+                        bits <= op1[WIDTH - 1 : WIDTH - 2];
+                        radicand <= (radicand << 2) + bits;
+                        temp <= (res << 2) + 1 ;    
+                        iteration <= iteration - 1;
+                    end else begin 
+                        sqrt_state <= 2;
                     end
-                    
-                    op1 <= op1 << 2;
-                    bits <= op1[WIDTH - 1 : WIDTH - 2];
-                    radicand <= (radicand << 2) + bits;
-                    temp <= (res << 2) + 1 ;    
-                    iteration <= iteration - 1;
-
                 end
-                2: begin // Set ready signal
+                2: begin 
                     root <= res;
                     root_ready <= 1;
                     sqrt_state <= 0;
