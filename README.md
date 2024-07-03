@@ -373,3 +373,13 @@ Multiplier
 
 Square Root
 ![](Images/Square_root.png)
+
+
+Simulation:
+![](Images/1.png)
+
+![](Images/2.png)
+
+![](Images/3.png)
+
+![](Images/4.png)
