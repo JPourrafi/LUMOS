@@ -366,16 +366,16 @@ This block performs the core square root calculation.
 
         * Otherwise, it proceeds to the next iteration, updating `op1` , `ac` , `q` , and the iteration counter *i*.
 
-Waveforms:
+### Waveforms:
 
-Multiplier
+#### Multiplier
 ![](Images/Multiplier.png)
 
-Square Root
+#### Square Root
 ![](Images/Square_root.png)
 
 
-Final Simulation Results:
+### Final Simulation Results:
 
 ![](Images/1.png)
 
