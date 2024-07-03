@@ -375,7 +375,8 @@ Square Root
 ![](Images/Square_root.png)
 
 
-Simulation:
+Final Simulation Results:
+
 ![](Images/1.png)
 
 ![](Images/2.png)
